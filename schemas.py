@@ -1,48 +1,52 @@
 """
-Database Schemas
+Database Schemas for Student Event Performance Analyzer
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
-
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+Each Pydantic model corresponds to one MongoDB collection.
+Collection name is the lowercase of the class name.
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, Literal
+from datetime import date as DateType
 
-# Example schemas (replace with your own):
 
-class User(BaseModel):
+class Student(BaseModel):
     """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
+    Students collection schema
+    Collection name: "student"
     """
-    name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+    roll_number: str = Field(..., description="Unique roll number e.g., 249Y1A3901")
+    name: str = Field(..., description="Full name of the student")
+    branch: str = Field(..., description="Department / Branch e.g., AI & ML")
+    current_semester: int = Field(..., ge=1, le=12, description="Current semester number")
+    academic_year: str = Field(..., description="Academic year label e.g., 2024-25")
 
-class Product(BaseModel):
+
+class Event(BaseModel):
     """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
+    Events collection schema (represents an event occurrence series)
+    Collection name: "event"
     """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
+    name: str = Field(..., description="Event name e.g., AI Symposium")
+    branch: Optional[str] = Field(None, description="Branch primarily associated (optional)")
+    academic_year: Optional[str] = Field(None, description="Academic year for this event series (optional)")
 
-# Add your own schemas here:
-# --------------------------------------------------
 
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+ParticipationStatus = Literal["Attended", "Missed"]
+
+
+class Participation(BaseModel):
+    """
+    Participation collection schema (one document per student per event occurrence)
+    Collection name: "participation"
+    """
+    roll_number: str = Field(..., description="Student roll number")
+    event_name: str = Field(..., description="Event name")
+    event_date: DateType = Field(..., description="Date of event conducted")
+    semester: int = Field(..., ge=1, le=12, description="Semester when event occurred")
+    status: ParticipationStatus = Field(..., description="Participation status")
+    academic_year: str = Field(..., description="Academic year label (e.g., 2024-25)")
+    branch: str = Field(..., description="Branch of the student")
+
+
+# The Flames database viewer can introspect these schemas via /schema endpoint
